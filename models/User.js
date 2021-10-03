@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
 // run this middleware prior to saving
 // function() must be used for the this keyword
 userSchema.pre('save', async function(next) {
+  // if password is there, n we r updating, no use of hashing it again
   if (!this.isModified('password')) {
     next();
   }
@@ -47,6 +48,11 @@ userSchema.pre('save', async function(next) {
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
+// check if password matches this created user
+userSchema.methods.matchPasswords = async function(password) {
+  return await bcrypt.compare(password, this.password);
+}
 
 const User = mongoose.model('User', userSchema);
 module.exports = {
