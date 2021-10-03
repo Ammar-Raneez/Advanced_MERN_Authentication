@@ -56,10 +56,12 @@ userSchema.methods.matchPasswords = async function(password) {
 }
 
 userSchema.methods.getSignedToken = function() {
-  return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: process.env.EXPIRES_IN, }, );
+  return jwt.sign(
+    // what will return as payload when we decode this
+    { _id: this._id, just: 'somethingextra', },
+    process.env.JWT_SECRET, { expiresIn: process.env.EXPIRES_IN, },
+  );
 }
 
 const User = mongoose.model('User', userSchema);
-module.exports = {
-  User,
-}
+module.exports = User;
