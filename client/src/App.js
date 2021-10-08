@@ -1,25 +1,23 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div className="app">
+        <Switch>
+          <Route exact path="/login" component={loginScreen} />
+          <Route exact path="/register" component={registerScreen} />
+          <Route exact path="/forgotPassword" component={forgotPasswordScreen} />
+          <Route exact path="/passwordReset/:resetToken" component={passwordResetScreen} />
+        </Switch>
+      </div>
+    </Router>
   );
 }
 
 export default App;
+
+// proxy added to package.json to any routing done in axios
+// will be automatically passed ot that proxy value, if the url is not
+// explicitly specified
