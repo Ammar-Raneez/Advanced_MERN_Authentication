@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
+const sendEmail = require('../utils/sendEmail');
 
 exports.register = async (req, res, next) => {
   const { username, email, password, } = req.body;
@@ -61,8 +62,53 @@ exports.login = async (req, res, next) => {
   }
 }
 
-exports.forgotPassword = (req, res, next) => {
-  res.send('Forgot Password route');
+exports.forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      // we aren't saying no user found, cuz user shouldn't know that
+      return next(new ErrorResponse('Email could not be sent', 404));
+    }
+
+    const resetToken = user.getResetPasswordToken();
+
+    // we call save here, the check we added in pre save runs, cuz we haven't
+    // done anything to the password
+    await user.save();
+
+    // create reset password url
+    const resetUrl = `${process.env.FRONTEND}/${resetToken}`;
+
+    // create email to be sent
+    // clicktracking off means that annoying redirect to unnnecessary links can be removed
+    // when reset url clicked on
+    const message = `
+      <h1>You have requested a password reset</h1>
+      <p>Please go to this link to reset your password</p>
+      <a href=${resetUrl} clicktracking=off>${resetUrl}</a>
+    `;
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Password Reset Request',
+        text: message
+      });
+
+      res.status(200).json({ data: 'Email sent' });
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save();
+
+      return next(new ErrorResponse('Email could not be sent', 500));
+    }
+  } catch (err) {
+    next(err);
+  }
 }
 
 exports.resetPassword = (req, res, next) => {
